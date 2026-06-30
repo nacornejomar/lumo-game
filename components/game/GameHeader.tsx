@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import type { Room, RoomPlayer } from '@/types';
 
 interface GameHeaderProps {
@@ -12,6 +13,7 @@ interface GameHeaderProps {
 
 export function GameHeader({ room, myPlayer, opponentPlayer, playerId, roomCode }: GameHeaderProps) {
   const isMyTurn = room.current_turn_player_id === playerId;
+  const router = useRouter();
 
   return (
     <div
@@ -22,7 +24,11 @@ export function GameHeader({ room, myPlayer, opponentPlayer, playerId, roomCode 
         boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
       }}
     >
-      <span className="lumo-logo text-2xl">Lumo</span>
+      <span
+        className="lumo-logo text-2xl cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={() => router.push('/')}
+        title="Volver al inicio"
+      >Lumo</span>
 
       <div className="flex-1" />
 
