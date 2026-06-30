@@ -326,8 +326,8 @@ export default function AdminPage() {
                     {getInitials(char.name)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-display font-bold text-sm truncate text-lumo-text">{char.name}</p>
-                    <p className="text-xs text-lumo-muted truncate font-body">{char.profession_or_role}</p>
+                    <p className="font-display font-bold text-sm truncate text-lumo-dark">{char.name}</p>
+                    <p className="text-xs truncate font-body" style={{ color: '#7a6048' }}>{char.profession_or_role}</p>
                     <p className="text-xs font-body mt-0.5" style={{ color: ring.ring, opacity: 0.8 }}>
                       {Object.keys(char.attributes as object ?? {}).filter(k => (char.attributes as Record<string, unknown>)[k]).length} atributos
                     </p>
