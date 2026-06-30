@@ -19,6 +19,34 @@ export async function POST(req: NextRequest) {
       const { createServerSupabase } = await import('@/lib/supabase');
       const supabase = createServerSupabase();
 
+      if (vsAI) {
+        const categoryChars = getCharactersByCategory(categoryId);
+        const shuffled = shuffleArray(categoryChars.map(c => c.id));
+        const gameCharIds = shuffled.slice(0, Math.min(24, shuffled.length));
+        const [secret1Id, secret2Id] = shuffleArray([...gameCharIds]);
+        const aiId = `ai_${code}`;
+
+        const { data: room, error: roomError } = await supabase
+          .from('rooms')
+          .insert({
+            code,
+            category_id: categoryId,
+            status: 'playing',
+            game_character_ids: gameCharIds,
+            current_turn_player_id: playerId,
+          })
+          .select()
+          .single();
+        if (roomError) throw roomError;
+
+        await supabase.from('room_players').insert([
+          { room_id: room.id, player_id: playerId, player_name: playerName, secret_character_id: secret1Id, position: 1, is_ready: true },
+          { room_id: room.id, player_id: aiId, player_name: 'Lumo IA', secret_character_id: secret2Id, position: 2, is_ready: true },
+        ]);
+
+        return NextResponse.json({ room: { ...room, is_vs_ai: true }, code });
+      }
+
       const { data: room, error: roomError } = await supabase
         .from('rooms')
         .insert({ code, category_id: categoryId, status: 'waiting' })
