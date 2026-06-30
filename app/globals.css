@@ -1,0 +1,224 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-cinzel:      'Cinzel', Palatino, Georgia, serif;
+  --font-cinzel-deco: 'Cinzel Decorative', 'Cinzel', serif;
+  --font-lora:        'Lora', Georgia, serif;
+
+  --wood-deep:    #0e0804;
+  --wood-dark:    #1a0d05;
+  --wood-mid:     #2a1508;
+  --wood-frame:   #3d2010;
+  --wood-border:  #6b3f1e;
+  --gold:         #c8953a;
+  --gold-bright:  #e8b84a;
+  --gold-text:    #f5d878;
+  --parchment:    #f2e5c0;
+  --parchment-dk: #d9c89a;
+  --cream:        #faf0d8;
+  --leaf:         #4a7c3f;
+  --leaf-bright:  #7dc850;
+  --ember:        #b83228;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-lora);
+  background-color: var(--wood-deep);
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(42,21,8,0.8) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(61,32,16,0.6) 0%, transparent 50%),
+    repeating-linear-gradient(
+      92deg,
+      transparent,
+      transparent 80px,
+      rgba(200,149,58,0.015) 80px,
+      rgba(200,149,58,0.015) 82px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 120px,
+      rgba(0,0,0,0.06) 120px,
+      rgba(0,0,0,0.06) 121px
+    );
+  color: var(--cream);
+  min-height: 100vh;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--wood-mid); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold-bright); }
+
+/* ── Coin (kept for backward compat, not used in main grid) */
+.coin-wrap { perspective: 700px; }
+.coin-inner {
+  width: 100%; height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.coin-inner.is-flipped { transform: rotateY(180deg); }
+.coin-face, .coin-back {
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 50%;
+}
+.coin-back {
+  transform: rotateY(180deg);
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Lumo logo ─────────────────────────────────────────── */
+.lumo-logo {
+  font-family: var(--font-cinzel-deco);
+  font-weight: 900;
+  background: linear-gradient(180deg, #faeac0 0%, #e8b84a 35%, #c8953a 65%, #8a5c1a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+  letter-spacing: 0.02em;
+}
+
+/* ── Input ─────────────────────────────────────────────── */
+.lumo-input {
+  background: var(--parchment);
+  border: 1.5px solid var(--gold);
+  color: #2a1508;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  font-family: var(--font-lora);
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.lumo-input:focus {
+  outline: none;
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 0 3px rgba(200,149,58,0.2);
+}
+.lumo-input::placeholder { color: #7a6048; opacity: 0.8; }
+
+/* ── Buttons ───────────────────────────────────────────── */
+.lumo-btn {
+  font-family: var(--font-cinzel);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  position: relative;
+}
+.lumo-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+
+.lumo-btn-primary {
+  background: linear-gradient(180deg, #d4a040 0%, #9a6018 100%);
+  border-color: var(--gold-bright);
+  color: #1a0800;
+  box-shadow: 0 4px 0 #5a2c08, 0 6px 14px rgba(0,0,0,0.5);
+  text-shadow: 0 1px 0 rgba(255,240,160,0.4);
+}
+.lumo-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #e8b84a 0%, #b07828 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #5a2c08, 0 8px 20px rgba(0,0,0,0.6);
+}
+.lumo-btn-primary:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #5a2c08, 0 3px 8px rgba(0,0,0,0.4);
+}
+
+.lumo-btn-gold {
+  background: linear-gradient(180deg, #c8953a 0%, #7a5010 100%);
+  border-color: #e8b84a;
+  color: #faf0d0;
+  box-shadow: 0 4px 0 #3a1c04, 0 6px 14px rgba(0,0,0,0.5);
+}
+.lumo-btn-gold:hover:not(:disabled) {
+  background: linear-gradient(180deg, #e8b84a 0%, #a07020 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #3a1c04, 0 8px 20px rgba(0,0,0,0.6);
+}
+.lumo-btn-gold:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #3a1c04; }
+
+.lumo-btn-green {
+  background: linear-gradient(180deg, #5a9c40 0%, #2e6020 100%);
+  border-color: var(--leaf-bright);
+  color: #e8f8d0;
+  box-shadow: 0 4px 0 #143808, 0 6px 14px rgba(0,0,0,0.5);
+}
+.lumo-btn-green:hover:not(:disabled) {
+  background: linear-gradient(180deg, #7dc850 0%, #4a8030 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #143808, 0 8px 20px rgba(0,0,0,0.6);
+}
+.lumo-btn-green:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #143808; }
+
+.lumo-btn-red {
+  background: linear-gradient(180deg, #c84030 0%, #801818 100%);
+  border-color: #e05040;
+  color: #ffe8e0;
+  box-shadow: 0 4px 0 #500808, 0 6px 14px rgba(0,0,0,0.5);
+}
+.lumo-btn-red:hover:not(:disabled) {
+  background: linear-gradient(180deg, #e05040 0%, #a02828 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #500808, 0 8px 20px rgba(0,0,0,0.6);
+}
+.lumo-btn-red:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #500808; }
+
+.lumo-btn-outline {
+  background: transparent;
+  color: var(--gold);
+  border: 1.5px solid var(--gold);
+  box-shadow: none;
+}
+.lumo-btn-outline:hover:not(:disabled) { background: rgba(200,149,58,0.1); }
+
+/* ── Card / Panel ──────────────────────────────────────── */
+.lumo-card {
+  background: var(--parchment);
+  border: 2px solid var(--gold);
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+  color: #2a1508;
+}
+
+/* ── Ornamental header divider ─────────────────────────── */
+.lumo-ornament {
+  display: flex; align-items: center; gap: 0.5rem;
+  color: var(--gold);
+  font-family: var(--font-cinzel);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.lumo-ornament::before,
+.lumo-ornament::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* ── Wood frame container ──────────────────────────────── */
+.lumo-wood-frame {
+  background: linear-gradient(180deg, #3d2010 0%, #1e0e06 100%);
+  border: 2px solid var(--wood-border);
+  border-radius: 0.625rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(200,149,58,0.15);
+}
