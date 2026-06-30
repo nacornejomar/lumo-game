@@ -1,10 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    'C:/Users/nacor/OneDrive/Escritorio/Claude/Wass/app/**/*.{js,ts,jsx,tsx,mdx}',
-    'C:/Users/nacor/OneDrive/Escritorio/Claude/Wass/components/**/*.{js,ts,jsx,tsx,mdx}',
-    'C:/Users/nacor/OneDrive/Escritorio/Claude/Wass/hooks/**/*.{js,ts,jsx,tsx}',
-    'C:/Users/nacor/OneDrive/Escritorio/Claude/Wass/data/**/*.{js,ts}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './hooks/**/*.{js,ts,jsx,tsx}',
+    './data/**/*.{js,ts}',
   ],
   theme: {
     extend: {
