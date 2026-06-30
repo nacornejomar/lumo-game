@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Find another waiting player (anyone except self)
-    const waiting = [...matchQueue.values()].find(e => e.playerId !== playerId && !e.matchedRoomCode);
+    const waiting = Array.from(matchQueue.values()).find(e => e.playerId !== playerId && !e.matchedRoomCode);
 
     if (waiting) {
       // Match found — create the room with both players
