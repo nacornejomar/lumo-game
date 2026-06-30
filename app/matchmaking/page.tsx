@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getPlayerIdFromStorage, getPlayerNameFromStorage } from '@/lib/gameUtils';
 
-export default function MatchmakingPage() {
+function MatchmakingContent() {
   const router = useRouter();
   const params = useSearchParams();
   const categoryId = params.get('cat') ?? 'cat-hp';
@@ -163,5 +163,13 @@ export default function MatchmakingPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function MatchmakingPage() {
+  return (
+    <Suspense fallback={null}>
+      <MatchmakingContent />
+    </Suspense>
   );
 }
