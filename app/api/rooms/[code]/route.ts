@@ -31,7 +31,8 @@ export async function GET(
         characters = chars ?? [];
       }
 
-      return NextResponse.json({ room, players: players ?? [], questions: questions ?? [], characters });
+      const isVsAI = (players ?? []).some(p => p.player_id.startsWith('ai_'));
+      return NextResponse.json({ room: { ...room, is_vs_ai: isVsAI }, players: players ?? [], questions: questions ?? [], characters });
     }
 
     // ── Modo demo ────────────────────────────────────────────────
