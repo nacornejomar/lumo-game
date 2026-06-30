@@ -14,7 +14,15 @@ interface CharacterTileProps {
 
 export function CharacterTile({ character, index, isDismissed, isGuessMode, onClick }: CharacterTileProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const initials = character.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+  const handleImgError = () => {
+    if (retryCount < 3) {
+      const delay = (retryCount + 1) * 6000;
+      setTimeout(() => { setImgLoaded(false); setRetryCount(r => r + 1); }, delay);
+    }
+  };
 
   return (
     <div
@@ -51,17 +59,29 @@ export function CharacterTile({ character, index, isDismissed, isGuessMode, onCl
 
       {/* Portrait */}
       <div className="relative overflow-hidden" style={{ aspectRatio: '3/4' }}>
-        {/* Initials fallback */}
-        <div className={clsx('absolute inset-0 flex items-center justify-center transition-opacity duration-300', imgLoaded ? 'opacity-0' : 'opacity-100')}>
-          <span className="font-display font-bold" style={{ color: '#6b5040', fontSize: 'clamp(0.5rem, 2vw, 0.75rem)' }}>
-            {initials}
-          </span>
-        </div>
+        {/* Loading shimmer */}
+        {!imgLoaded && character.image_url && (
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(90deg, #2a1508 25%, #3d2010 50%, #2a1508 75%)',
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 1.8s infinite',
+          }} />
+        )}
+
+        {/* Initials fallback (no image_url or all retries exhausted) */}
+        {(!character.image_url || retryCount >= 3) && !imgLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="font-display font-bold" style={{ color: '#6b5040', fontSize: 'clamp(0.5rem, 2vw, 0.75rem)' }}>
+              {initials}
+            </span>
+          </div>
+        )}
 
         {/* Character image */}
         {character.image_url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
+            key={retryCount}
             src={character.image_url}
             alt={character.name}
             className={clsx(
@@ -70,6 +90,7 @@ export function CharacterTile({ character, index, isDismissed, isGuessMode, onCl
               isDismissed ? 'grayscale opacity-40' : '',
             )}
             onLoad={() => setImgLoaded(true)}
+            onError={handleImgError}
             loading="lazy"
           />
         )}
