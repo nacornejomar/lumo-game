@@ -8,10 +8,16 @@ import { AI_ATTRIBUTES } from '@/lib/aiLogic';
 import type { Character, Category } from '@/types';
 
 const ADMIN_KEY = 'lumo_admin_2024';
-
 const DEFAULT_RING = { ring: '#7854d4', glow: '', bg: '#1e1640', label: '#e8e0ff' };
-
 type Tab = 'characters' | 'categories';
+
+interface CacheProgress {
+  total: number;
+  done: number;
+  errors: number;
+  current: string;
+  finished: boolean;
+}
 
 export default function AdminPage() {
   const router = useRouter();
@@ -25,6 +31,7 @@ export default function AdminPage() {
   const [editingCat, setEditingCat] = useState<Partial<Category> | null>(null);
   const [message, setMessage] = useState('');
   const [filterCat, setFilterCat] = useState('');
+  const [cacheProgress, setCacheProgress] = useState<CacheProgress | null>(null);
 
   useEffect(() => {
     const saved = sessionStorage.getItem(ADMIN_KEY);
@@ -63,6 +70,48 @@ export default function AdminPage() {
   };
 
   const showMsg = (m: string) => { setMessage(m); setTimeout(() => setMessage(''), 3000); };
+
+  // ── Image caching ─────────────────────────────────────────────────────────
+
+  const cacheAllImages = async (onlyMissing = false) => {
+    const targets = onlyMissing
+      ? characters.filter(c => !c.image_url || c.image_url.includes('pollinations.ai'))
+      : characters.filter(c => c.image_url);
+
+    if (targets.length === 0) { showMsg('No hay imágenes para procesar'); return; }
+
+    setCacheProgress({ total: targets.length, done: 0, errors: 0, current: '', finished: false });
+
+    let done = 0;
+    let errors = 0;
+
+    for (const char of targets) {
+      setCacheProgress(p => ({ ...p!, current: char.name }));
+      try {
+        const res = await fetch('/api/admin/cache-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ charId: char.id, imageUrl: char.image_url }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          done++;
+          // Update local state with new URL
+          setCharacters(prev => prev.map(c => c.id === char.id ? { ...c, image_url: data.publicUrl } : c));
+        } else {
+          errors++;
+          console.warn(`Error cacheando ${char.name}:`, data.error);
+        }
+      } catch {
+        errors++;
+      }
+      setCacheProgress(p => ({ ...p!, done: done + errors, errors }));
+    }
+
+    setCacheProgress(p => ({ ...p!, finished: true, current: '', done: done + errors }));
+    showMsg(`Imágenes guardadas: ${done} exitosas, ${errors} fallidas`);
+    await loadData();
+  };
 
   // ── Characters ────────────────────────────────────────────────────────────
 
@@ -183,6 +232,14 @@ export default function AdminPage() {
         </button>
         <h1 className="font-display font-bold text-2xl text-lumo-primary">Panel Admin</h1>
         <div className="flex-1" />
+        <button
+          onClick={() => cacheAllImages(true)}
+          disabled={!!cacheProgress && !cacheProgress.finished}
+          className="lumo-btn lumo-btn-outline text-xs px-3 py-1.5"
+          title="Descarga las imágenes de Pollinations AI y las guarda en Supabase Storage"
+        >
+          🖼️ Guardar imágenes
+        </button>
         <button onClick={loadData} disabled={isLoading} className="lumo-btn lumo-btn-outline text-xs px-3 py-1.5">
           {isLoading ? '...' : '🔄 Recargar'}
         </button>
@@ -449,6 +506,52 @@ export default function AdminPage() {
               <button onClick={saveCharacter} className="lumo-btn lumo-btn-primary flex-1 text-sm">Guardar</button>
               <button onClick={() => setEditingChar(null)} className="lumo-btn lumo-btn-outline flex-1 text-sm">Cancelar</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Image Cache Progress Modal ── */}
+      {cacheProgress && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)' }}>
+          <div className="lumo-card w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4">
+            <h3 className="font-display font-bold text-lg text-lumo-primary">
+              {cacheProgress.finished ? '✓ Imágenes guardadas' : '🖼️ Guardando imágenes…'}
+            </h3>
+
+            {/* Progress bar */}
+            <div className="w-full rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.3)', height: '10px' }}>
+              <div
+                className="h-full transition-all duration-300 rounded-full"
+                style={{
+                  width: `${Math.round((cacheProgress.done / cacheProgress.total) * 100)}%`,
+                  background: cacheProgress.errors > 0 ? 'linear-gradient(90deg, #c8953a, #e87a6e)' : 'linear-gradient(90deg, #c8953a, #e8b84a)',
+                }}
+              />
+            </div>
+
+            <div className="text-sm font-body space-y-1">
+              <p className="text-lumo-muted">
+                <span className="text-lumo-primary font-bold">{cacheProgress.done}</span> / {cacheProgress.total} procesadas
+                {cacheProgress.errors > 0 && <span className="text-red-400 ml-2">({cacheProgress.errors} fallidas)</span>}
+              </p>
+              {!cacheProgress.finished && cacheProgress.current && (
+                <p className="text-xs text-lumo-muted opacity-70 truncate">↳ {cacheProgress.current}</p>
+              )}
+              {!cacheProgress.finished && (
+                <p className="text-xs text-lumo-muted opacity-50 mt-1">
+                  Pollinations AI genera imágenes bajo demanda — puede tomar hasta 1 minuto por imagen.
+                </p>
+              )}
+            </div>
+
+            {cacheProgress.finished && (
+              <button
+                onClick={() => setCacheProgress(null)}
+                className="lumo-btn lumo-btn-primary w-full text-sm"
+              >
+                Cerrar
+              </button>
+            )}
           </div>
         </div>
       )}
