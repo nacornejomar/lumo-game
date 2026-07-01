@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import type { Room, RoomPlayer } from '@/types';
 
 interface GameHeaderProps {
@@ -14,8 +15,48 @@ interface GameHeaderProps {
 export function GameHeader({ room, myPlayer, opponentPlayer, playerId, roomCode }: GameHeaderProps) {
   const isMyTurn = room.current_turn_player_id === playerId;
   const router = useRouter();
+  const [showConfirm, setShowConfirm] = useState(false);
 
   return (
+    <>
+      {/* Confirm abandon dialog */}
+      {showConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
+        >
+          <div
+            className="w-full max-w-xs rounded-2xl p-6 flex flex-col gap-4 text-center"
+            style={{ background: 'var(--wood-mid)', border: '2px solid var(--gold)', boxShadow: '0 8px 40px rgba(0,0,0,0.8)' }}
+          >
+            <div className="text-4xl">⚠️</div>
+            <div>
+              <p className="font-display font-bold text-lg" style={{ color: 'var(--gold)' }}>
+                ¿Abandonar la partida?
+              </p>
+              <p className="font-body text-sm mt-1" style={{ color: 'var(--muted)' }}>
+                Si sales ahora perderás el progreso de esta sala.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="lumo-btn lumo-btn-outline flex-1 text-sm"
+              >
+                Seguir jugando
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="lumo-btn lumo-btn-primary flex-1 text-sm"
+                style={{ background: 'var(--ember)', borderColor: 'var(--ember)' }}
+              >
+                Abandonar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     <div
       className="flex flex-wrap items-center gap-2 px-4 py-2.5"
       style={{
@@ -26,7 +67,7 @@ export function GameHeader({ room, myPlayer, opponentPlayer, playerId, roomCode 
     >
       <span
         className="lumo-logo text-2xl cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => router.push('/')}
+        onClick={() => room.status === 'playing' ? setShowConfirm(true) : router.push('/')}
         title="Volver al inicio"
       >Lumo</span>
 
@@ -76,6 +117,7 @@ export function GameHeader({ room, myPlayer, opponentPlayer, playerId, roomCode 
 
       <StatusBadge status={room.status} isMyTurn={isMyTurn} />
     </div>
+    </>
   );
 }
 
