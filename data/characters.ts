@@ -19,6 +19,7 @@ export const CATEGORY_RING: Record<string, { ring: string; glow: string; bg: str
   'cat-starwars': { ring: '#4fc3f7', glow: 'rgba(79,195,247,0.6)',  bg: '#050a24', label: '#e0f7fa' },
   'cat-marvel':   { ring: '#e53935', glow: 'rgba(229,57,53,0.6)',   bg: '#1a0000', label: '#ffeb3b' },
   'cat-pixar':    { ring: '#26a69a', glow: 'rgba(38,166,154,0.5)',  bg: '#004d40', label: '#e0f2f1' },
+  'cat-f1':       { ring: '#e10600', glow: 'rgba(225,6,0,0.55)',    bg: '#0a0808', label: '#ffffff' },
 };
 
 export const SEED_CHARACTERS: Omit<Character, 'created_at'>[] = [
