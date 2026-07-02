@@ -20,7 +20,36 @@ export async function POST(
       const supabase = createServerSupabase();
       const { data: room } = await supabase.from('rooms').select('id,status,current_turn_player_id').eq('code', code).single();
       if (!room || room.status !== 'playing') return NextResponse.json({ error: 'Sala no disponible' }, { status: 400 });
-      if (room.current_turn_player_id !== askerId) return NextResponse.json({ error: 'No es tu turno' }, { status: 403 });
+
+      // In vs-AI mode the AI never uses this endpoint, so allow the human to ask
+      // as long as there is no pending unanswered question (avoids double-asks).
+      const isAiAsker = askerId.startsWith('ai_');
+      const isAiTurn = room.current_turn_player_id?.startsWith('ai_');
+
+      if (isAiAsker) {
+        return NextResponse.json({ error: 'La IA usa otro endpoint' }, { status: 403 });
+      }
+
+      if (!isAiTurn) {
+        // Normal multiplayer check: must be the asker's turn
+        if (room.current_turn_player_id !== askerId) {
+          return NextResponse.json({ error: 'No es tu turno' }, { status: 403 });
+        }
+      } else {
+        // AI has the turn — human should only be answering, not asking.
+        // But allow if there is no pending AI question yet (timing gap).
+        const { data: pendingQ } = await supabase
+          .from('questions')
+          .select('id')
+          .eq('room_id', room.id)
+          .like('asker_player_id', 'ai_%')
+          .is('answer', null)
+          .limit(1);
+        if (pendingQ && pendingQ.length > 0) {
+          return NextResponse.json({ error: 'Responde primero la pregunta de la IA' }, { status: 403 });
+        }
+      }
+
       const { data: question, error } = await supabase.from('questions').insert({ room_id: room.id, asker_player_id: askerId, question_text: questionText.trim() }).select().single();
       if (error) throw error;
       return NextResponse.json({ question });
