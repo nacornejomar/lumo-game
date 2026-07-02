@@ -154,7 +154,7 @@ export default function AdminPage() {
   const setCharAttr = (key: string, value: boolean) => {
     setEditingChar(prev => ({
       ...prev!,
-      attributes: { ...(prev?.attributes as Record<string, unknown> ?? {}), [key]: value },
+      attributes: { ...(prev?.attributes as Record<string, string | number | boolean> ?? {}), [key]: value },
     }));
   };
 
