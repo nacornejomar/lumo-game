@@ -139,8 +139,8 @@ export function SecretCharacterPanel({ character, room, isMyTurn }: SecretCharac
         >
           <span style={{ fontSize: '0.9rem' }}>{category?.icon ?? '✦'}</span>
           <span
-            className="text-xs font-bold uppercase tracking-wide truncate"
-            style={{ color: '#9a8060', fontFamily: 'var(--font-cinzel)' }}
+            className="text-xs font-bold truncate"
+            style={{ color: '#9a8060', fontFamily: 'var(--font-lora)' }}
           >
             {category?.name ?? 'Mix'}
           </span>

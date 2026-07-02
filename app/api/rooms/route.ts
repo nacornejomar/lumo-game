@@ -20,8 +20,14 @@ export async function POST(req: NextRequest) {
       const supabase = createServerSupabase();
 
       if (vsAI) {
-        const categoryChars = getCharactersByCategory(categoryId);
-        const shuffled = shuffleArray(categoryChars.map(c => c.id));
+        // Fetch characters from Supabase (covers categories not in SEED_CHARACTERS, e.g. F1)
+        const { data: dbChars } = await supabase
+          .from('characters')
+          .select('id')
+          .eq('category_id', categoryId)
+          .eq('active', true);
+        const categoryCharIds = dbChars?.map(c => c.id) ?? getCharactersByCategory(categoryId).map(c => c.id);
+        const shuffled = shuffleArray(categoryCharIds);
         const gameCharIds = shuffled.slice(0, Math.min(24, shuffled.length));
         const [secret1Id, secret2Id] = shuffleArray([...gameCharIds]);
         const aiId = `ai_${code}`;
