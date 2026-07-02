@@ -10,6 +10,7 @@ export const SEED_CATEGORIES: Omit<Category, 'created_at'>[] = [
   { id: 'cat-starwars', name: 'Star Wars', slug: 'starwars', description: 'Que la Fuerza te acompañe', icon: '⭐', active: true },
   { id: 'cat-marvel', name: 'Marvel', slug: 'marvel', description: 'Los héroes más poderosos del universo', icon: '🦸', active: true },
   { id: 'cat-pixar', name: 'Pixar', slug: 'pixar', description: 'La magia de los estudios Pixar', icon: '🎬', active: true },
+  { id: 'cat-f1', name: 'Pilotos de F1', slug: 'f1', description: 'Los mejores pilotos de la Fórmula 1: leyendas y actuales', icon: '🏎️', active: true },
 ];
 
 export const CATEGORY_RING: Record<string, { ring: string; glow: string; bg: string; label: string }> = {
