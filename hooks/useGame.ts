@@ -47,7 +47,7 @@ export function useGame(roomCode: string, playerId: string) {
     if (!roomCode || !playerId) return;
     const seq = ++loadSeqRef.current;
     try {
-      const res = await fetch(`/api/rooms/${roomCode}`);
+      const res = await fetch(`/api/rooms/${roomCode}`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Sala no encontrada');
       const data = await res.json();
 
@@ -128,6 +128,8 @@ export function useGame(roomCode: string, playerId: string) {
 
     if (hasSupabase) {
       subscribeSupabase();
+      // Safety-net poll: catches any state missed by Realtime
+      pollRef.current = setInterval(() => loadGameData(true), 4000);
     } else {
       // Modo demo: polling cada 2.5s
       pollRef.current = setInterval(() => loadGameData(true), 2500);
