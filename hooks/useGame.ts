@@ -26,6 +26,7 @@ export function useGame(roomCode: string, playerId: string) {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const secretLoadedRef = useRef(false);
   const lastAiTriggerRef = useRef('');
+  const loadSeqRef = useRef(0);
 
   const loadSecret = useCallback(async (code: string, pid: string) => {
     if (secretLoadedRef.current) return;
@@ -44,10 +45,14 @@ export function useGame(roomCode: string, playerId: string) {
 
   const loadGameData = useCallback(async (silent = false) => {
     if (!roomCode || !playerId) return;
+    const seq = ++loadSeqRef.current;
     try {
       const res = await fetch(`/api/rooms/${roomCode}`);
       if (!res.ok) throw new Error('Sala no encontrada');
       const data = await res.json();
+
+      // Ignore stale responses when multiple loads are in-flight
+      if (seq !== loadSeqRef.current) return;
 
       const { room, players, questions, characters } = data as {
         room: Room; players: RoomPlayer[]; questions: Question[]; characters: Character[];
@@ -146,7 +151,8 @@ export function useGame(roomCode: string, playerId: string) {
         ? prev
         : { ...prev, questions: [...prev.questions, data.question] });
     }
-    if (!hasSupabase) await loadGameData(true);
+    // Always reload to confirm DB state (don't rely solely on Realtime)
+    await loadGameData(true);
     return data;
   }, [roomCode, playerId, loadGameData]);
 
@@ -157,8 +163,9 @@ export function useGame(roomCode: string, playerId: string) {
       body: JSON.stringify({ questionId, answer, answererId: playerId }),
     });
     if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
-    if (!hasSupabase) await loadGameData(true);
-    return res.json();
+    // Always reload to get fresh turn state (don't rely solely on Realtime)
+    await loadGameData(true);
+    return { success: true };
   }, [roomCode, playerId, loadGameData]);
 
   const dismissCharacter = useCallback(async (characterId: string) => {
