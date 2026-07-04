@@ -139,8 +139,15 @@ export function useGame(roomCode: string, playerId: string) {
       body: JSON.stringify({ questionText, askerId: playerId }),
     });
     if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    const data = await res.json();
+    // Optimistically add the question so the AI trigger fires without waiting for Realtime
+    if (data.question) {
+      setState(prev => prev.questions.some(q => q.id === data.question.id)
+        ? prev
+        : { ...prev, questions: [...prev.questions, data.question] });
+    }
     if (!hasSupabase) await loadGameData(true);
-    return res.json();
+    return data;
   }, [roomCode, playerId, loadGameData]);
 
   const answerQuestion = useCallback(async (questionId: string, answer: 'yes' | 'no') => {
