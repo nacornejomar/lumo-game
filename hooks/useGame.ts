@@ -61,17 +61,23 @@ export function useGame(roomCode: string, playerId: string) {
       const myPlayer = players.find(p => p.player_id === playerId) ?? null;
       const opponentPlayer = players.find(p => p.player_id !== playerId) ?? null;
 
-      setState(prev => ({
-        ...prev,
-        room,
-        characters: characters.length > 0 ? characters : prev.characters,
-        myPlayer,
-        opponentPlayer,
-        questions,
-        isMyTurn: room.current_turn_player_id === playerId,
-        isLoading: false,
-        error: null,
-      }));
+      setState(prev => {
+        // Merge: server is authoritative for existing questions, but keep
+        // any local-optimistic questions not yet confirmed by the server.
+        const serverIds = new Set((questions as Question[]).map((q: Question) => q.id));
+        const localOnly = prev.questions.filter(q => !serverIds.has(q.id));
+        return {
+          ...prev,
+          room,
+          characters: characters.length > 0 ? characters : prev.characters,
+          myPlayer,
+          opponentPlayer,
+          questions: [...(questions as Question[]), ...localOnly],
+          isMyTurn: room.current_turn_player_id === playerId,
+          isLoading: false,
+          error: null,
+        };
+      });
 
       if ((room.status === 'playing' || room.status === 'finished') && !secretLoadedRef.current) {
         loadSecret(roomCode, playerId);
@@ -151,10 +157,8 @@ export function useGame(roomCode: string, playerId: string) {
         ? prev
         : { ...prev, questions: [...prev.questions, data.question] });
     }
-    // Always reload to confirm DB state (don't rely solely on Realtime)
-    await loadGameData(true);
     return data;
-  }, [roomCode, playerId, loadGameData]);
+  }, [roomCode, playerId]);
 
   const answerQuestion = useCallback(async (questionId: string, answer: 'yes' | 'no') => {
     const res = await fetch(`/api/rooms/${roomCode}/questions`, {

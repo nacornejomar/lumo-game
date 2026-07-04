@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { memDb, isSupabaseConfigured } from '@/lib/memoryStore';
 import { SEED_CHARACTERS } from '@/data/characters';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: { code: string } }
