@@ -26,7 +26,7 @@ export function useGame(roomCode: string, playerId: string) {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const secretLoadedRef = useRef(false);
   const lastAiTriggerRef = useRef('');
-  const loadSeqRef = useRef(0);
+  const lastLoadTsRef = useRef(0);
 
   const loadSecret = useCallback(async (code: string, pid: string) => {
     if (secretLoadedRef.current) return;
@@ -45,14 +45,11 @@ export function useGame(roomCode: string, playerId: string) {
 
   const loadGameData = useCallback(async (silent = false) => {
     if (!roomCode || !playerId) return;
-    const seq = ++loadSeqRef.current;
+    const startedAt = Date.now();
     try {
       const res = await fetch(`/api/rooms/${roomCode}`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Sala no encontrada');
       const data = await res.json();
-
-      // Ignore stale responses when multiple loads are in-flight
-      if (seq !== loadSeqRef.current) return;
 
       const { room, players, questions, characters } = data as {
         room: Room; players: RoomPlayer[]; questions: Question[]; characters: Character[];
@@ -62,18 +59,29 @@ export function useGame(roomCode: string, playerId: string) {
       const opponentPlayer = players.find(p => p.player_id !== playerId) ?? null;
 
       setState(prev => {
-        // Merge: server is authoritative for existing questions, but keep
-        // any local-optimistic questions not yet confirmed by the server.
-        const serverIds = new Set((questions as Question[]).map((q: Question) => q.id));
+        // Only allow more-recent fetches to update isMyTurn / room.
+        // But ALWAYS merge questions so they never disappear.
+        const isFresh = startedAt >= lastLoadTsRef.current;
+        if (isFresh) lastLoadTsRef.current = startedAt;
+
+        // Merge: server is authoritative, but keep local-optimistic questions
+        // not yet confirmed by the server (handles Realtime delivery delays).
+        const serverIds = new Set((questions ?? []).map((q: Question) => q.id));
         const localOnly = prev.questions.filter(q => !serverIds.has(q.id));
+        const merged = [...(questions ?? []), ...localOnly];
+
         return {
           ...prev,
-          room,
-          characters: characters.length > 0 ? characters : prev.characters,
-          myPlayer,
-          opponentPlayer,
-          questions: [...(questions as Question[]), ...localOnly],
-          isMyTurn: room.current_turn_player_id === playerId,
+          // Room/turn/players only update from a fresh (non-stale) response
+          ...(isFresh ? {
+            room,
+            characters: characters.length > 0 ? characters : prev.characters,
+            myPlayer,
+            opponentPlayer,
+            isMyTurn: room.current_turn_player_id === playerId,
+          } : {}),
+          // Questions always merge — never erase
+          questions: merged,
           isLoading: false,
           error: null,
         };
