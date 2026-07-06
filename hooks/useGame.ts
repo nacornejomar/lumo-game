@@ -59,20 +59,27 @@ export function useGame(roomCode: string, playerId: string) {
       const opponentPlayer = players.find(p => p.player_id !== playerId) ?? null;
 
       setState(prev => {
-        // Only allow more-recent fetches to update isMyTurn / room.
-        // But ALWAYS merge questions so they never disappear.
         const isFresh = startedAt >= lastLoadTsRef.current;
         if (isFresh) lastLoadTsRef.current = startedAt;
 
-        // Merge: server is authoritative, but keep local-optimistic questions
-        // not yet confirmed by the server (handles Realtime delivery delays).
-        const serverIds = new Set((questions ?? []).map((q: Question) => q.id));
-        const localOnly = prev.questions.filter(q => !serverIds.has(q.id));
-        const merged = [...(questions ?? []), ...localOnly];
+        // Smart merge: for each question prefer whichever version has more info.
+        // A stale server response might return q1 without an answer even though
+        // Realtime already delivered the answered version — keep the answered one.
+        const mergedMap = new Map<string, Question>();
+        for (const q of (questions ?? [])) mergedMap.set(q.id, q as Question);
+        for (const q of prev.questions) {
+          const srv = mergedMap.get(q.id);
+          if (!srv) {
+            mergedMap.set(q.id, q); // local-only: keep
+          } else if (q.answer !== null && srv.answer === null) {
+            mergedMap.set(q.id, q); // local answered, server stale: keep local
+          }
+        }
+        const merged = Array.from(mergedMap.values())
+          .sort((a, b) => new Date(a.asked_at).getTime() - new Date(b.asked_at).getTime());
 
         return {
           ...prev,
-          // Room/turn/players only update from a fresh (non-stale) response
           ...(isFresh ? {
             room,
             characters: characters.length > 0 ? characters : prev.characters,
@@ -80,7 +87,6 @@ export function useGame(roomCode: string, playerId: string) {
             opponentPlayer,
             isMyTurn: room.current_turn_player_id === playerId,
           } : {}),
-          // Questions always merge — never erase
           questions: merged,
           isLoading: false,
           error: null,
