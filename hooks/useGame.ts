@@ -22,7 +22,7 @@ const hasSupabase = !!(SUPABASE_URL && SUPABASE_URL !== 'https://xxxx.supabase.c
 
 export function useGame(roomCode: string, playerId: string) {
   const [state, setState] = useState<GameState>(INITIAL_STATE);
-  const channelRef = useRef<unknown>(null);
+  const channelRef = useRef<ReturnType<import('@supabase/supabase-js').SupabaseClient['channel']> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const secretLoadedRef = useRef(false);
   const lastAiTriggerRef = useRef('');
@@ -103,7 +103,13 @@ export function useGame(roomCode: string, playerId: string) {
 
   const subscribeSupabase = useCallback(async () => {
     const { createClientSupabase } = await import('@/lib/supabase');
-    const supabase = createClientSupabase();
+    const supabase = createClientSupabase(); // singleton — same instance every call
+
+    // Remove any previous channel for this room before subscribing again
+    if (channelRef.current) {
+      await supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
 
     const channel = supabase
       .channel(`room-${roomCode}`)
@@ -145,8 +151,10 @@ export function useGame(roomCode: string, playerId: string) {
 
     return () => {
       if (hasSupabase && channelRef.current) {
+        const ch = channelRef.current;
+        channelRef.current = null;
         import('@/lib/supabase').then(({ createClientSupabase }) => {
-          createClientSupabase().removeChannel(channelRef.current as ReturnType<ReturnType<typeof createClientSupabase>['channel']>);
+          createClientSupabase().removeChannel(ch); // same singleton — actually removes it
         });
       }
       if (pollRef.current) clearInterval(pollRef.current);
