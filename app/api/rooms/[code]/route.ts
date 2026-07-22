@@ -24,8 +24,9 @@ export async function GET(
         .select('id,room_id,player_id,player_name,position,is_ready,dismissed_character_ids,created_at')
         .eq('room_id', room.id).order('position');
 
-      const { data: questions } = await supabase
+      const { data: questions, error: questionsError } = await supabase
         .from('questions').select('*').eq('room_id', room.id).order('asked_at');
+      if (questionsError) console.error('[rooms GET] questions query error:', questionsError);
 
       let characters: unknown[] = [];
       if (room.game_character_ids?.length > 0) {
@@ -34,7 +35,7 @@ export async function GET(
       }
 
       const isVsAI = (players ?? []).some(p => p.player_id.startsWith('ai_'));
-      return NextResponse.json({ room: { ...room, is_vs_ai: isVsAI }, players: players ?? [], questions: questions ?? [], characters });
+      return NextResponse.json({ room: { ...room, is_vs_ai: isVsAI }, players: players ?? [], questions: questions ?? [], characters, _qErr: questionsError?.message });
     }
 
     // ── Modo demo ────────────────────────────────────────────────
